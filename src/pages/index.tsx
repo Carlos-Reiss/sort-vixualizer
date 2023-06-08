@@ -3,12 +3,13 @@ import Head from "next/head";
 import { ControlSort } from "./components/ControlSort";
 import { NavDescription } from "./components/NavDescription";
 import { Header } from "./components/Header";
+import { SortProvider } from "@app/hooks/SortProvider";
 
 export default function Home() {
   return (
-    <>
+    <SortProvider>
       <Head>
-        <title>Sort Vixualizer</title>
+        <title>Sort ViXualizer</title>
         <meta name="description" content="add description" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
@@ -69,6 +70,6 @@ export default function Home() {
           </GridItem>
         </Grid>
       </main>
-    </>
+    </SortProvider>
   );
 }

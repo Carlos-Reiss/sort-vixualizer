@@ -1,41 +1,48 @@
-import { generateRandomArray } from "@app/utils";
-import { Box, Button, Container, HStack, IconButton } from "@chakra-ui/react";
+import { SortingContext } from "@app/hooks/SortProvider";
 import {
-  ArrowCounterClockwise,
-  Pause,
-  Play,
-  Rewind,
-} from "@phosphor-icons/react";
-import { useState } from "react";
+  ArrayProps,
+  DEFAULT_COLOR,
+  UPPER_COLOR,
+  generateRandomArray,
+} from "@app/utils";
+import {
+  Box,
+  Button,
+  Container,
+  HStack,
+  IconButton,
+  Tooltip,
+} from "@chakra-ui/react";
+import { ArrowCounterClockwise, Play, Rewind } from "@phosphor-icons/react";
+import { useContext, useEffect, useState } from "react";
 import { Graphics } from "./graphics/Graphics";
 
 export const ControlSort = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [speed, setSpeed] = useState(1);
-  const [steps, setSteps] = useState<number[][]>([]);
-  const [array, setArray] = useState<number[]>(generateRandomArray(20, 20));
+  const [steps, setSteps] = useState<ArrayProps[][]>([]);
+  const [array, setArray] = useState<ArrayProps[]>(generateRandomArray(20, 30));
+  const { sortType } = useContext(SortingContext);
 
   // actions button
   const [play, setPlay] = useState(false);
-  const [paused, setPaused] = useState(false);
   const [finished, setFinished] = useState(false);
 
-  const bubbleSort = async (array: number[], speed: number) => {
+  const bubbleSort = async (array: ArrayProps[], speed: number) => {
     let swap = false;
-    let steps: number[][] = [[...array]];
+    let steps: ArrayProps[][] = [[...array]];
 
     do {
       swap = false;
 
       for (let i = 0; i < array.length; i++) {
-        if (array[i] > array[i + 1]) {
+        if (array[i].value > array[i + 1]?.value) {
           const temp = array[i];
 
           array[i] = array[i + 1];
           array[i + 1] = temp;
 
-          // array[i].color = LOWER_COLOR;
-          // array[i + 1].color = UPPER_COLOR;
+          temp.color = UPPER_COLOR;
 
           setCurrentStep((prev) => prev + 1);
           swap = true;
@@ -43,12 +50,42 @@ export const ControlSort = () => {
           setArray([...array]);
           steps.push([...array]);
           await new Promise((resolve) => setTimeout(resolve, 500 / speed));
-          // array[i].color = DEFAULT_COLOR;
-          // array[i + 1].color = DEFAULT_COLOR;
+          array[i].color = DEFAULT_COLOR;
+          array[i + 1].color = DEFAULT_COLOR;
         }
       }
     } while (swap);
 
+    setSteps(steps);
+    handleFishAlgorithm();
+  };
+
+  const insertionSort = async (array: ArrayProps[], speed: number) => {
+    let steps: ArrayProps[][] = [[...array]];
+
+    for (let i = 1; i < array.length; i++) {
+      let j = i - 1;
+      let temp = array[i];
+
+      while (j >= 0 && array[j].value > temp.value) {
+        array[j + 1] = array[j];
+        j--;
+      }
+
+      array[j + 1] = temp;
+
+      // Representar a posição do elemento inserido com a cor YELLOW
+      if (j + 1 !== i) {
+        array[i].color = UPPER_COLOR;
+      }
+
+      setCurrentStep((prev) => prev + 1);
+
+      setArray([...array]);
+      steps.push([...array]);
+      await new Promise((resolve) => setTimeout(resolve, 500 / speed));
+      array[i].color = DEFAULT_COLOR;
+    }
     setSteps(steps);
     handleFishAlgorithm();
   };
@@ -73,23 +110,30 @@ export const ControlSort = () => {
     }
   };
 
-  const handlePauseAlgorithm = () => {
-    setPaused(true);
-  };
-
   const handlePlayAlgorithm = () => {
-    setPlay(true);
     if (!!steps.length) {
       continueSteps();
     } else {
-      bubbleSort(array, speed);
+      switch (sortType) {
+        case "bubble":
+          setPlay(true);
+          bubbleSort(array, speed);
+          break;
+        case "insertion":
+          setPlay(true);
+          insertionSort(array, speed);
+          break;
+
+        default:
+          break;
+      }
     }
   };
 
   const handleRewindAlgorithm = () => {
-    setArray(generateRandomArray(20, 20));
+    setArray(generateRandomArray(20, 30));
     setCurrentStep(0);
-    setPaused(false);
+
     setFinished(false);
     setPlay(false);
     setSteps([]);
@@ -98,7 +142,6 @@ export const ControlSort = () => {
   const handleFishAlgorithm = () => {
     setFinished(true);
     setPlay(false);
-    setPaused(false);
   };
 
   return (
@@ -115,7 +158,7 @@ export const ControlSort = () => {
             size="md"
             colorScheme="facebook"
             mt="24px"
-            isDisabled={!finished && !paused}
+            isDisabled={!finished}
             _disabled={{
               cursor: "not-allowed",
               opacity: 0.4,
@@ -130,6 +173,7 @@ export const ControlSort = () => {
           <IconButton
             size="md"
             colorScheme="facebook"
+            isDisabled={play}
             _disabled={{
               cursor: "not-allowed",
               opacity: 0.4,
@@ -143,38 +187,26 @@ export const ControlSort = () => {
         </Box>
 
         <Box>
-          <IconButton
-            size="md"
-            colorScheme="facebook"
-            mt="24px"
-            isDisabled={!play}
-            _disabled={{
-              cursor: "not-allowed",
-              opacity: 0.4,
-              bg: "gray",
-            }}
-            aria-label="Pause Algorithm"
-            onClick={handlePauseAlgorithm}
-            icon={<Pause size={18} />}
-          ></IconButton>
-        </Box>
-
-        <Box>
-          <IconButton
-            size="md"
-            colorScheme="facebook"
-            title="generate a new elements"
-            mt="24px"
-            isDisabled={!finished && play && !paused}
-            _disabled={{
-              cursor: "not-allowed",
-              opacity: 0.4,
-              bg: "gray",
-            }}
-            onClick={handleRewindAlgorithm}
-            aria-label="restart Algorithm"
-            icon={<ArrowCounterClockwise size={18} />}
-          ></IconButton>
+          <Tooltip
+            hasArrow
+            placement="top-start"
+            label="Generate a new Elements"
+          >
+            <IconButton
+              size="md"
+              colorScheme="facebook"
+              mt="24px"
+              isDisabled={!finished && play}
+              _disabled={{
+                cursor: "not-allowed",
+                opacity: 0.4,
+                bg: "gray",
+              }}
+              onClick={handleRewindAlgorithm}
+              aria-label="restart Algorithm"
+              icon={<ArrowCounterClockwise size={18} />}
+            />
+          </Tooltip>
         </Box>
 
         <Box>

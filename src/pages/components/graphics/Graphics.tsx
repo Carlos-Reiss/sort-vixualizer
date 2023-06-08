@@ -1,4 +1,4 @@
-import { DEFAULT_COLOR } from "@app/utils";
+import { ArrayProps, DEFAULT_COLOR } from "@app/utils";
 import {
   Slider,
   SliderFilledTrack,
@@ -13,14 +13,14 @@ export const Graphics = ({
   array,
   handleDefineSpeed,
 }: {
-  array: number[];
+  array: ArrayProps[];
   handleDefineSpeed: (value: number) => void;
 }) => {
   return (
-    <Reorder.Group
-      axis="x"
-      values={array}
-      onReorder={() => {}}
+    <div
+      // axis="x"
+      // values={array}
+      // onReorder={() => {}}
       style={{
         width: "780px",
         height: "450px",
@@ -31,26 +31,26 @@ export const Graphics = ({
       }}
     >
       {array.map((item, index) => (
-        <Reorder.Item
-          dragListener={false}
-          value={item}
+        <div
+          // dragListener={false}
+          // value={item}
           key={index}
           style={{
-            height: `${item * 10}px`,
+            height: `${item.value * 10}px`,
             width: "40px",
-            backgroundColor: `${DEFAULT_COLOR}`,
+            backgroundColor: `${item.color}`,
             marginRight: "10px",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
           }}
-        ></Reorder.Item>
+        ></div>
       ))}
 
       <Slider
         aria-label="slider-ex-3"
         orientation="vertical"
-        defaultValue={1}
+        defaultValue={2}
         min={1}
         max={5}
         maxH="200px"
@@ -83,6 +83,6 @@ export const Graphics = ({
           <SliderThumb bg="gray.500" />
         </Tooltip>
       </Slider>
-    </Reorder.Group>
+    </div>
   );
 };
